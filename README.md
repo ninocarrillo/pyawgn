@@ -1,2 +1,2 @@
 # noisemaker
-Add measured noise to signal samples for modem performance testing.
+These are tools to manipulate audio files for testing modems. 
