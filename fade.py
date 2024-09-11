@@ -26,8 +26,8 @@ def main():
 		print("Python version should be 3.x, exiting")
 		sys.exit(1)
 	# check correct number of parameters were passed to command line
-	if len(sys.argv) != 4:
-		print("Not enough arguments. Usage: python3 fade.py <sound file> <fade depth dB> <period sec>")
+	if (len(sys.argv) > 5) or (len(sys.argv) < 4):
+		print("Wrong argument count. Usage: python3 fade.py <sound file> <fade depth dB> <period sec> <optional output sound file>")
 		sys.exit(2)
 	# try to open audio file
 	try:
@@ -48,27 +48,31 @@ def main():
 
 	faded_audio = input_audio * power(10,fade_profile / 20)
 
-	# apply gain to noise audio
-	#filtered_noise_audio = filtered_noise_audio * power(10,energy_error / 20)
+	ratio = 32767 / max([-min(faded_audio), max(faded_audio)])
+	faded_audio = ratio * faded_audio
 
 
-	#generate a new directory for the outputs
-	run_number = 0
-	print('trying to make a new directory')
-	while True:
-		run_number = run_number + 1
-		dirname = f'./run{run_number}/'
-		try:
-			mkdir(dirname)
-		except:
-			print(dirname + ' exists')
-			continue
-		break
-	print(f'made directory {dirname}')
+	if len(sys.argv) == 5:
+		filename = sys.argv[4]
+	else:
+		#generate a new directory for the outputs
+		run_number = 0
+		print('trying to make a new directory')
+		while True:
+			run_number = run_number + 1
+			dirname = f'./run{run_number}/'
+			try:
+				mkdir(dirname)
+			except:
+				print(dirname + ' exists')
+				continue
+			break
+		print(f'made directory {dirname}')
 
-	filename = f'output_{sys.argv[2]}_{sys.argv[3]}.wav'
+		filename = dirname + f'output_fade_{sys.argv[2]}s_{sys.argv[3]}dB.wav'
 
-	writewav(dirname+filename, input_sample_rate, faded_audio.astype(int16))
+	writewav(filename, input_sample_rate, faded_audio.astype(int16))
+	print(f'wrote file {filename}')
 
 
 if __name__ == "__main__":

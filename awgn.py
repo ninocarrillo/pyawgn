@@ -86,14 +86,13 @@ def main():
 	filtered_noise_energy = calc_energy(filtered_noise_audio)
 	print(f'filtered noise energy is now {round(filtered_noise_energy,1)} dB')
 
-	print(f'signal to noise ratio is {round(filtered_audio_energy - filtered_noise_energy, 1)} dB')
+	print(f'average signal to noise ratio is {round(filtered_audio_energy - filtered_noise_energy, 1)} dB')
 
 	# generate signal + noise audio
 	combined_audio = filtered_audio + filtered_noise_audio
 
-	# Make 16 bit compatible
-
-	combined_audio = combined_audio * 32767 / max([abs(min(combined_audio)), max(combined_audio)])
+	ratio = 32767 / max([-min(combined_audio), max(combined_audio)])
+	combined_audio = ratio * combined_audio
 
 	if len(sys.argv) == 5:
 		filename = sys.argv[4]
@@ -112,7 +111,7 @@ def main():
 			break
 		print(f'made directory {dirname}')
 
-		filename = dirname + f'output_{sys.argv[2]}Hz_{sys.argv[3]}dB.wav'
+		filename = dirname + f'output_awgn_{sys.argv[2]}Hz_{sys.argv[3]}dB.wav'
 
 	writewav(filename, input_sample_rate, combined_audio.astype(int16))
 	print(f'wrote file {filename}')

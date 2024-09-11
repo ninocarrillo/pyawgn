@@ -1,19 +1,16 @@
 # Python3
-# Add measured noise to signal samples for modem performance testing.
+# Add multipath distortion to signal samples for modem performance testing.
 # Nino Carrillo
 # 10 Sep 2024
 # Exit codes
 # 1 Wrong Python version
 # 2 Wrong argument count
 # 3 Unable to open audio file
-# 4 Unable to generate filter at requested bandwidth
 
 import sys
 from scipy.io.wavfile import read as readwav
 from scipy.io.wavfile import write as writewav
-from scipy.signal import firwin
-from numpy import zeros, concatenate, int16
-from numpy.random import normal
+from numpy import power, int16
 from os import mkdir
 import string
 
@@ -29,8 +26,8 @@ def main():
 		print("Python version should be 3.x, exiting")
 		sys.exit(1)
 	# check correct number of parameters were passed to command line
-	if (len(sys.argv) > 5) or (len(sys.argv) < 4):
-		print("Wrong argument count. Usage: python3 multipath.py <sound file> <start milliseconds> <end milliseconds> <optional output sound file>")
+	if (len(sys.argv) > 6) or (len(sys.argv) < 5):
+		print("Wrong argument count. Usage: python3 multipath.py <sound file> <start milliseconds> <end milliseconds> <path dB> <optional output sound file>")
 		sys.exit(2)
 	# try to open audio file
 	try:
@@ -46,6 +43,7 @@ def main():
 	# calculate multipath sample delay
 	start_milliseconds = float(sys.argv[2]) * input_sample_rate / 1000
 	end_milliseconds = float(sys.argv[3]) * input_sample_rate / 1000
+	path_atten = float(sys.argv[4])
 	delta_milliseconds = start_milliseconds - end_milliseconds
 	increment_milliseconds = delta_milliseconds / sample_count
 
@@ -58,11 +56,14 @@ def main():
 			delay_index += sample_count
 		while delay_index > (sample_count - 1):
 			delay_index -= sample_count
-		input_audio[i] += int(input_audio_copy[delay_index])
+		input_audio[i] += int(input_audio_copy[delay_index] * power(10,path_atten / 20))
 		millisecond_delay += increment_milliseconds
 
-	if len(sys.argv) == 5:
-		filename = sys.argv[4]
+	ratio = 32767 / max([-min(input_audio), max(input_audio)])
+	input_audio = ratio * input_audio
+
+	if len(sys.argv) == 6:
+		filename = sys.argv[5]
 	else:
 		#generate a new directory for the outputs
 		run_number = 0
@@ -78,7 +79,7 @@ def main():
 			break
 		print(f'made directory {dirname}')
 
-		filename = dirname + f'output_{sys.argv[2]}s_{sys.argv[3]}s.wav'
+		filename = dirname + f'output_multipath_{sys.argv[2]}s_{sys.argv[3]}s.wav'
 
 	writewav(filename, input_sample_rate, input_audio.astype(int16))
 	print(f'wrote file {filename}')
