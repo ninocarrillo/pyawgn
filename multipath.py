@@ -29,8 +29,8 @@ def main():
 		print("Python version should be 3.x, exiting")
 		sys.exit(1)
 	# check correct number of parameters were passed to command line
-	if len(sys.argv) != 4:
-		print("Wrong argument count. Usage: python3 multipath.py <sound file> <start milliseconds> <end milliseconds>")
+	if (len(sys.argv) > 5) or (len(sys.argv) < 4):
+		print("Wrong argument count. Usage: python3 multipath.py <sound file> <start milliseconds> <end milliseconds> <optional output sound file>")
 		sys.exit(2)
 	# try to open audio file
 	try:
@@ -61,27 +61,27 @@ def main():
 		input_audio[i] += int(input_audio_copy[delay_index])
 		millisecond_delay += increment_milliseconds
 
-	# Make 16 bit compatible
-	#input_audio = input_audio * 32767 / max(input_audio)
+	if len(sys.argv) == 5:
+		filename = sys.argv[4]
+	else:
+		#generate a new directory for the outputs
+		run_number = 0
+		print('trying to make a new directory')
+		while True:
+			run_number = run_number + 1
+			dirname = f'./run{run_number}/'
+			try:
+				mkdir(dirname)
+			except:
+				print(dirname + ' exists')
+				continue
+			break
+		print(f'made directory {dirname}')
 
+		filename = dirname + f'output_{sys.argv[2]}s_{sys.argv[3]}s.wav'
 
-	#generate a new directory for the outputs
-	run_number = 0
-	print('trying to make a new directory')
-	while True:
-		run_number = run_number + 1
-		dirname = f'./run{run_number}/'
-		try:
-			mkdir(dirname)
-		except:
-			print(dirname + ' exists')
-			continue
-		break
-	print(f'made directory {dirname}')
-
-	filename = f'output_{sys.argv[2]}-{sys.argv[3]}ms.wav'
-
-	writewav(dirname+filename, input_sample_rate, input_audio.astype(int16))
+	writewav(filename, input_sample_rate, input_audio.astype(int16))
+	print(f'wrote file {filename}')
 
 
 if __name__ == "__main__":
