@@ -16,12 +16,59 @@ from numpy import convolve, int16, power, log10
 from numpy.random import normal
 from os import mkdir
 import string
+import matplotlib.pyplot as plot
 
 def calc_energy(samples):
 	energy = 0
+	energy_history = []
 	for sample in samples:
-		energy += sample * sample
+		inst_energy = sample * sample
+		energy += inst_energy
+		#energy_history.append(10*log10(inst_energy))
+	#plot.figure()
+	#plot.plot(energy_history)
+	#plot.show()
 	return 10*log10(energy)
+
+def rem_silence(samples, sample_rate, avg_inst_energy, threshold_time):
+	threshold_sample_count = int(round(threshold_time*sample_rate))
+	hi_thresh_energy = power(10, (avg_inst_energy-10)/20)
+	lo_thresh_energy = power(10, (avg_inst_energy-20)/20)
+	index = 0
+	start_silence = 0
+	end_silence = 0
+	state = 'no_silence'
+	silence_markers = []
+	for index in range(len(samples)):
+		instantaneous_energy = power(samples[index], 2)
+		if state=='silence':
+			if instantaneous_energy > hi_thresh_energy:
+				end_silence = index
+				silence_duration = end_silence - start_silence
+				if silence_duration >= threshold_sample_count:
+					silence_markers.append([start_silence, end_silence, silence_duration])
+				state = 'no_silence'
+		else:
+			if instantaneous_energy < lo_thresh_energy:
+				start_silence = index
+				state = 'silence'
+	print(f'removing {len(silence_markers)} silent sections')
+	if len(silence_markers) > 0:
+		trimmed_samples = []
+		input_index = 0
+		silence_index = 0
+		while silence_index < len(silence_markers):
+			if input_index < silence_markers[silence_index][0]:
+				trimmed_samples.extend(samples[input_index:silence_markers[silence_index][0]-1])
+				input_index = silence_markers[silence_index][1]
+			silence_index += 1
+		if silence_markers[silence_index-1][1] < (len(samples) - 1):
+			trimmed_samples.extend(samples[input_index:])
+	else:
+		trimmed_samples.extend(samples)
+
+	return trimmed_samples
+
 
 def main():
 	# check correct version of Python
@@ -62,14 +109,25 @@ def main():
 
 	# measure energy in filtered input
 	filtered_audio_energy = calc_energy(filtered_audio)
+	avg_inst_energy = filtered_audio_energy - (10*log10(len(filtered_audio)))
 	print(f'energy in filtered input audio is {round(filtered_audio_energy,1)} dB')
+	print(f'average instantaneous energy is {round(avg_inst_energy, 1)} dB')
+
+	# remove silence
+	filtered_audio = rem_silence(filtered_audio, input_sample_rate, avg_inst_energy, 0.1)
+
+	# measure energy in filtered input
+	filtered_audio_energy = calc_energy(filtered_audio)
+	avg_inst_energy = filtered_audio_energy - (10*log10(len(filtered_audio)))
+	print(f'energy in filtered and trimmed input audio is {round(filtered_audio_energy,1)} dB')
+	print(f'average instantaneous energy is {round(avg_inst_energy, 1)} dB')
 
 	# calculate energy required in noise audio
 	required_noise_energy = filtered_audio_energy - float(sys.argv[3])
 	print(f'energy required in noise audio is {round(required_noise_energy,1)} dB')
 
 	# generate noise audio
-	noise_audio = normal(0, 10000, len(input_audio))
+	noise_audio = normal(0, 10000, len(filtered_audio)+len(bandwidth_filter) - 1)
 	filtered_noise_audio = convolve(noise_audio, bandwidth_filter, 'valid')
 	filtered_noise_energy = calc_energy(filtered_noise_audio)
 	print(f'filtered noise energy is {round(filtered_noise_energy, 1)} dB')
