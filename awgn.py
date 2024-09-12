@@ -16,7 +16,6 @@ from numpy import convolve, int16, int32, power, log10
 from numpy.random import normal
 from os import mkdir
 import string
-import matplotlib.pyplot as plot
 
 def calc_energy(samples):
 	energy = 0
@@ -24,10 +23,6 @@ def calc_energy(samples):
 	for sample in samples:
 		inst_energy = sample * sample
 		energy += inst_energy
-		#energy_history.append(10*log10(inst_energy))
-	#plot.figure()
-	#plot.plot(energy_history)
-	#plot.show()
 	return 10*log10(energy)
 
 def rem_silence(samples, sample_rate, avg_inst_energy, threshold_time):
@@ -53,8 +48,8 @@ def rem_silence(samples, sample_rate, avg_inst_energy, threshold_time):
 				start_silence = index
 				state = 'silence'
 	print(f'removing {len(silence_markers)} silent sections')
+	trimmed_samples = []
 	if len(silence_markers) > 0:
-		trimmed_samples = []
 		input_index = 0
 		silence_index = 0
 		while silence_index < len(silence_markers):
