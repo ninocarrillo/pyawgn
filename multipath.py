@@ -10,7 +10,7 @@
 import sys
 from scipy.io.wavfile import read as readwav
 from scipy.io.wavfile import write as writewav
-from numpy import power, int16, int32
+from numpy import power, int16, int32, shape
 from os import mkdir
 import string
 
@@ -39,6 +39,10 @@ def main():
 	print(f'opened {sys.argv[1]}, sample rate {input_sample_rate}')
 
 	sample_count = len(input_audio)
+
+	# force mono
+	if len(shape(input_audio)) > 1:
+		input_audio = input_audio[0]
 
 	# convert input audio to int32
 	input_audio = input_audio.astype(int32)
