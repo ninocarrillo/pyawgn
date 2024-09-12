@@ -1,4 +1,4 @@
-# noisemaker
+# signal-noise
 These are tools to apply measured signal-to-noise ratio and distortion to audio samples of baseband digital modulation. They are intended to help modem users and developers measure and compare performance of different modulation and demodulation systems and techniques, under repeatable and measured conditions.
 # Requirements
 - Python3
