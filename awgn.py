@@ -33,7 +33,7 @@ def calc_energy(samples):
 def rem_silence(samples, sample_rate, avg_inst_energy, threshold_time):
 	threshold_sample_count = int(round(threshold_time*sample_rate))
 	hi_thresh_energy = power(10, (avg_inst_energy-10)/20)
-	lo_thresh_energy = power(10, (avg_inst_energy-20)/20)
+	lo_thresh_energy = power(10, (avg_inst_energy-30)/20)
 	index = 0
 	start_silence = 0
 	end_silence = 0
@@ -114,7 +114,7 @@ def main():
 	print(f'average instantaneous energy is {round(avg_inst_energy, 1)} dB')
 
 	# remove silence
-	filtered_audio = rem_silence(filtered_audio, input_sample_rate, avg_inst_energy, 0.1)
+	filtered_audio = rem_silence(filtered_audio, input_sample_rate, avg_inst_energy, 0.01)
 
 	# measure energy in filtered input
 	filtered_audio_energy = calc_energy(filtered_audio)
