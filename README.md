@@ -20,7 +20,7 @@ Parameters:
 Example: \
 `python3 awgn.py bpsk_1200.wav 3000 3`\
 \
-This will remove the silence from the user-provided file "bpsk_1200.wav", then add white gaussian-distributed noise within a 3000 Hz bandwidth to achieve 3dB signal-to-noise ratio. The program assumes that all the signal energy in the input file is **intentional modulation**, so the input file should only contain the intended signal. No output file was specified in this example, so the program will attempt to make a new directory named "run1", increasing the number in sequence as more runs are executed, and save the output file there.
+This will attempt to remove the silence from the user-provided file "bpsk_1200.wav", then add white gaussian-distributed noise within a 3000 Hz bandwidth to achieve 3dB signal-to-noise ratio. **NOTE: SILENCE REMOVAL DOESN'T WORK WELL YET, DON'T RELY ON IT.** Remove the silent sections of the audio file before using this tool. The program assumes that all the signal energy in the input file is **intentional modulation**, so the input file should only contain the intended signal. No output file was specified in this example, so the program will attempt to make a new directory named "run1", increasing the number in sequence as more runs are executed, and save the output file there.
 
 # fade.py
 Usage: `python3 fade.py <input sound file> <fade depth dB> <fade period sec> <optional output file>`\
@@ -37,7 +37,7 @@ This will generate an output file with 6 dB sinusoidal fading with a 4 second pe
 
 
 
-# multipath.py
+# multipath.py **EXPERIMENTAL - PROBABLY ALL WRONG AND DOESN'T WORK**
 Usage: `python3 multipath.py <input sound file> <start milliseconds> <end milliseconds> <path dB> <optional output file>`\
 Parameters:
 - **input sound file** path and name of input .wav file
