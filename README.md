@@ -1,5 +1,5 @@
 # signal-noise
-These are tools to apply measured signal-to-noise ratio and distortion to audio samples of baseband digital modulation. They are intended to help modem users and developers measure and compare performance of different modulation and demodulation systems and techniques, under repeatable and measured conditions.
+These are experimental tools to apply measured signal-to-noise ratio and distortion to audio samples of baseband digital modulation. They are intended to help modem users and developers measure and compare performance of different modulation and demodulation systems and techniques, under repeatable and measured conditions. These are experimental, and I probably have the concepts and/or math wrong. If you use these tools for any purpose, please validate your own results.
 # Requirements
 - Python3
 - SciPy
