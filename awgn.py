@@ -16,6 +16,7 @@ from numpy import convolve, int16, int32, power, log10, shape
 from numpy.random import normal
 from os import mkdir
 import string
+# from matplotlib import pyplot as plot
 
 def calc_energy(samples):
 	energy = 0
@@ -23,16 +24,20 @@ def calc_energy(samples):
 	for sample in samples:
 		inst_energy = sample * sample
 		energy += inst_energy
+		energy_history.append(inst_energy)
+	# plot.figure()
+	# plot.plot(10*log10(energy_history))
+	# plot.show()
 	return 10*log10(energy)
 
-def rem_silence(samples, sample_rate, avg_inst_energy, threshold_time):
+def find_silence(samples, sample_rate, avg_inst_energy, threshold_time):
 	threshold_sample_count = int(round(threshold_time*sample_rate))
-	hi_thresh_energy = power(10, (avg_inst_energy-10)/20)
-	lo_thresh_energy = power(10, (avg_inst_energy-30)/20)
+	hi_thresh_energy = power(10, (avg_inst_energy-3)/20)
+	lo_thresh_energy = power(10, (avg_inst_energy-20)/20)
 	index = 0
 	start_silence = 0
 	end_silence = 0
-	state = 'no_silence'
+	state = 'silence'
 	silence_markers = []
 	for index in range(len(samples)):
 		instantaneous_energy = power(samples[index], 2)
@@ -42,28 +47,38 @@ def rem_silence(samples, sample_rate, avg_inst_energy, threshold_time):
 				silence_duration = end_silence - start_silence
 				if silence_duration >= threshold_sample_count:
 					silence_markers.append([start_silence, end_silence, silence_duration])
+					print(f'found silence from:{start_silence} to:{end_silence} length:{silence_duration}')
 				state = 'no_silence'
 		else:
 			if instantaneous_energy < lo_thresh_energy:
 				start_silence = index
 				state = 'silence'
+	if state=='silence':
+		end_silence = index
+		silence_duration = end_silence - start_silence
+		if silence_duration >= threshold_sample_count:
+			silence_markers.append([start_silence, end_silence, silence_duration])
+			print(f'found silence from:{start_silence} to:{end_silence} length:{silence_duration}')
+	return silence_markers
+
+def rem_silence(samples, silence_markers):
 	print(f'removing {len(silence_markers)} silent sections')
 	trimmed_samples = []
 	if len(silence_markers) > 0:
 		input_index = 0
 		silence_index = 0
 		while silence_index < len(silence_markers):
-			if input_index < silence_markers[silence_index][0]:
-				trimmed_samples.extend(samples[input_index:silence_markers[silence_index][0]-1])
+			print(f'testing input index {input_index} silence index {silence_index}')
+			if input_index <= silence_markers[silence_index][0]:
+				if silence_markers[silence_index][0] > input_index:
+					trimmed_samples.extend(samples[input_index:silence_markers[silence_index][0]-1])
 				input_index = silence_markers[silence_index][1]
 			silence_index += 1
 		if silence_markers[silence_index-1][1] < (len(samples) - 1):
 			trimmed_samples.extend(samples[input_index:])
 	else:
 		trimmed_samples.extend(samples)
-
 	return trimmed_samples
-
 
 def main():
 	# check correct version of Python
@@ -116,8 +131,11 @@ def main():
 	print(f'energy in filtered input audio is {round(filtered_audio_energy,1)} dB')
 	print(f'average instantaneous energy is {round(avg_inst_energy, 1)} dB')
 
+	# find silence
+	silence = find_silence(filtered_audio, input_sample_rate, avg_inst_energy, 0.01)
+
 	# remove silence
-	filtered_audio = rem_silence(filtered_audio, input_sample_rate, avg_inst_energy, 0.01)
+	filtered_audio = rem_silence(filtered_audio, silence)
 
 	# measure energy in filtered input
 	filtered_audio_energy = calc_energy(filtered_audio)
