@@ -87,7 +87,7 @@ def main():
 		sys.exit(1)
 	# check correct number of parameters were passed to command line
 	if (len(sys.argv) > 5) or (len(sys.argv) < 4):
-		print("Wrong argument count. Usage: python3 awgn.py <input sound file> <bandwidth> <SNR> <optional output sound file>")
+		print("Wrong argument count. Usage: python3 pyawgn.py <input sound file> <bandwidth> <SNR> <optional output sound file>")
 		sys.exit(2)
 	# try to open audio file
 	try:
