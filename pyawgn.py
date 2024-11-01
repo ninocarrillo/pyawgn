@@ -16,7 +16,7 @@ from numpy import convolve, int16, int32, power, log10, shape
 from numpy.random import normal
 from os import mkdir
 import string
-# from matplotlib import pyplot as plot
+#from matplotlib import pyplot as plot
 
 def calc_energy(samples):
 	energy = 0
@@ -25,9 +25,9 @@ def calc_energy(samples):
 		inst_energy = sample * sample
 		energy += inst_energy
 		energy_history.append(inst_energy)
-	# plot.figure()
-	# plot.plot(10*log10(energy_history))
-	# plot.show()
+	#plot.figure()
+	#plot.plot(10*log10(energy_history))
+	#plot.show()
 	return 10*log10(energy)
 
 def find_silence(samples, sample_rate, avg_inst_energy, threshold_time):
@@ -119,7 +119,12 @@ def main():
 		print(f'unable to generate filter at requested bandwidth {sys.argv[2]}')
 		sys.exit(4)
 
-	# ensure gain of 0dB
+	# DC-balance input audio
+	dc_offset = sum(input_audio) / len(input_audio)
+	print(f'removing dc offset of input audio {dc_offset}')
+	input_audio = input_audio - dc_offset
+
+	# ensure filter gain of 0dB
 	bandwidth_filter = bandwidth_filter / sum(bandwidth_filter)
 
 	# filter input audio to specified bandwidth
