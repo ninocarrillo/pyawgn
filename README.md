@@ -4,7 +4,7 @@ A tool to apply measured signal-to-noise ratio to audio samples of baseband digi
 - Python3
 - SciPy
 # pyawgn.py
-Removes periods of silence and applies measured additive white gaussian noise to achieve the specified signal-to-noise ration within the specified bandwidth. The program accepts single-channle (mono) .wav audio files as input, and generates a new .wav file as output.\
+Removes periods of silence and applies measured additive white gaussian noise to achieve the specified signal-to-noise ration within the specified bandwidth. The program accepts single-channle (mono) .wav audio files as input, and generates a new .wav file as output.
 
 
 Usage: \
