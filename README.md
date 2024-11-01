@@ -1,11 +1,14 @@
 # pyawgn
-A tool to apply measured signal-to-noise ratio to audio samples of baseband digital modulation. Intended to help modem users and developers measure and compare performance of different modulation and demodulation systems and techniques, under repeatable and measured conditions. **This is experimental, and I may have the concepts and/or math wrong. If you use this program for any purpose, please validate your own results.**
+A tool to apply measured signal-to-noise ratio to audio samples of baseband digital modulation. Intended to help modem users and developers measure and compare performance of different modulation and demodulation systems and techniques, under repeatable and measured conditions. **This is experimental, and I may have the concepts and/or math wrong. If you use this program for any purpose, please validate your results.**
 # Requirements
 - Python3
 - SciPy
 # pyawgn.py
-Removes periods of silence and applies measured additive white gaussian noise to achieve the specified signal-to-noise ration within the specified bandwidth. The program accepts single-channle (mono) .wav audio files as input, and generates a new .wav file as output.
-Usage: `python3 pyawgn.py <input sound file> <bandwidth> <SNR> <optional output file>`\
+Removes periods of silence and applies measured additive white gaussian noise to achieve the specified signal-to-noise ration within the specified bandwidth. The program accepts single-channle (mono) .wav audio files as input, and generates a new .wav file as output.\
+
+
+Usage: \
+`python3 pyawgn.py <input sound file> <bandwidth> <SNR> <optional output file>`\
 Parameters:
 - **input sound file** path and name of input .wav file
 - **bandwidth** noise bandwidth in Hz
