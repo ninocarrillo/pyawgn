@@ -30,55 +30,14 @@ def calc_energy(samples):
 	#plot.show()
 	return 10*log10(energy)
 
-def find_silence(samples, sample_rate, avg_inst_energy, threshold_time):
-	threshold_sample_count = int(round(threshold_time*sample_rate))
-	hi_thresh_energy = power(10, (avg_inst_energy-3)/20)
-	lo_thresh_energy = power(10, (avg_inst_energy-20)/20)
-	index = 0
-	start_silence = 0
-	end_silence = 0
-	state = 'silence'
-	silence_markers = []
+def count_mod_samples(samples):
+	lo_thresh_energy = 40000
+	sample_count = 0
 	for index in range(len(samples)):
 		instantaneous_energy = power(samples[index], 2)
-		if state=='silence':
-			if instantaneous_energy > hi_thresh_energy:
-				end_silence = index
-				silence_duration = end_silence - start_silence
-				if silence_duration >= threshold_sample_count:
-					silence_markers.append([start_silence, end_silence, silence_duration])
-					print(f'found silence from:{start_silence} to:{end_silence} length:{silence_duration}')
-				state = 'no_silence'
-		else:
-			if instantaneous_energy < lo_thresh_energy:
-				start_silence = index
-				state = 'silence'
-	if state=='silence':
-		end_silence = index
-		silence_duration = end_silence - start_silence
-		if silence_duration >= threshold_sample_count:
-			silence_markers.append([start_silence, end_silence, silence_duration])
-			print(f'found silence from:{start_silence} to:{end_silence} length:{silence_duration}')
-	return silence_markers
-
-def rem_silence(samples, silence_markers):
-	print(f'removing {len(silence_markers)} silent sections')
-	trimmed_samples = []
-	if len(silence_markers) > 0:
-		input_index = 0
-		silence_index = 0
-		while silence_index < len(silence_markers):
-			print(f'testing input index {input_index} silence index {silence_index}')
-			if input_index <= silence_markers[silence_index][0]:
-				if silence_markers[silence_index][0] > input_index:
-					trimmed_samples.extend(samples[input_index:silence_markers[silence_index][0]-1])
-				input_index = silence_markers[silence_index][1]
-			silence_index += 1
-		if silence_markers[silence_index-1][1] < (len(samples) - 1):
-			trimmed_samples.extend(samples[input_index:])
-	else:
-		trimmed_samples.extend(samples)
-	return trimmed_samples
+		if instantaneous_energy > lo_thresh_energy:
+			sample_count += 1
+	return sample_count
 
 def main():
 	# check correct version of Python
@@ -121,7 +80,7 @@ def main():
 
 	# DC-balance input audio
 	dc_offset = sum(input_audio) / len(input_audio)
-	print(f'removing dc offset of input audio {dc_offset}')
+	print(f'removing dc offset of {dc_offset:.1f} samples')
 	input_audio = input_audio - dc_offset
 
 	# ensure filter gain of 0dB
@@ -130,37 +89,33 @@ def main():
 	# filter input audio to specified bandwidth
 	filtered_audio = convolve(input_audio, bandwidth_filter, 'valid')
 
-	# measure energy in filtered input
-	filtered_audio_energy = calc_energy(filtered_audio)
-	avg_inst_energy = filtered_audio_energy - (10*log10(len(filtered_audio)))
-	print(f'energy in filtered input audio is {round(filtered_audio_energy,1)} dB')
-	print(f'average instantaneous energy is {round(avg_inst_energy, 1)} dB')
-
-	# find silence
-	silence = find_silence(filtered_audio, input_sample_rate, avg_inst_energy, 0.01)
-
-	# remove silence
-	filtered_audio = rem_silence(filtered_audio, silence)
+	# count modulated samples to adjust energy for silent times
+	mod_count = count_mod_samples(filtered_audio)
+	print(f'Counted {mod_count} modulated samples in {len(filtered_audio)} samples.')
+	mod_adj = 10*log10(mod_count / len(filtered_audio))
+	print(f'Mod Adj {mod_adj:.1f} dB.')
 
 	# measure energy in filtered input
 	filtered_audio_energy = calc_energy(filtered_audio)
+	# adjust for modulated samples
+	filtered_audio_energy -= mod_adj
 	avg_inst_energy = filtered_audio_energy - (10*log10(len(filtered_audio)))
-	print(f'energy in filtered and trimmed input audio is {round(filtered_audio_energy,1)} dB')
-	print(f'average instantaneous energy is {round(avg_inst_energy, 1)} dB')
+	print(f'energy in filtered and trimmed input audio is {round(filtered_audio_energy,1):.1f} dB')
+	print(f'average instantaneous energy is {round(avg_inst_energy, 1):.1f} dB')
 
 	# calculate energy required in noise audio
 	required_noise_energy = filtered_audio_energy - float(sys.argv[3])
-	print(f'energy required in noise audio is {round(required_noise_energy,1)} dB')
+	print(f'energy required in noise audio is {round(required_noise_energy,1):.1f} dB')
 
 	# generate noise audio
 	noise_audio = normal(0, 10000, len(filtered_audio)+len(bandwidth_filter) - 1)
 	filtered_noise_audio = convolve(noise_audio, bandwidth_filter, 'valid')
 	filtered_noise_energy = calc_energy(filtered_noise_audio)
-	print(f'filtered noise energy is {round(filtered_noise_energy, 1)} dB')
+	print(f'filtered noise energy is {round(filtered_noise_energy, 1):.1f} dB')
 
 	# determined gain required
 	energy_error = required_noise_energy - filtered_noise_energy
-	print(f'energy error is {round(energy_error, 1)} dB')
+	print(f'energy error is {round(energy_error, 1):.1f} dB')
 
 	print('adjusting noise energy')
 
@@ -168,9 +123,9 @@ def main():
 	filtered_noise_audio = filtered_noise_audio * power(10,energy_error / 20)
 
 	filtered_noise_energy = calc_energy(filtered_noise_audio)
-	print(f'filtered noise energy is now {round(filtered_noise_energy,1)} dB')
+	print(f'filtered noise energy is now {round(filtered_noise_energy,1):.1f} dB')
 
-	print(f'average signal to noise ratio is {round(filtered_audio_energy - filtered_noise_energy, 1)} dB')
+	print(f'average signal to noise ratio is {round(filtered_audio_energy - filtered_noise_energy, 1):.1f} dB')
 
 	# generate signal + noise audio
 	combined_audio = filtered_audio + filtered_noise_audio
